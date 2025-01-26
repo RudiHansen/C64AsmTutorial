@@ -1,0 +1,687 @@
+00001  0000             ; 10 SYS (2304)
+00002  0001             
+00003  0001             *=$0801
+00004  0801             
+00005  0801  0E 08 0A              BYTE    $0E, $08, $0A, $00, $9E, $20, $28
+00006  0808  32 33 30              BYTE    $32, $33, $30, $34, $29, $00, $00, $00
+00007  0810             
+00008  0810             ;*******************************************************************************
+00009  0810             ;* GUESS THIS NUMBER                                                         *
+00010  0810             ;*                                                                             *
+00011  0810             ;* WRITTEN BY JOHN C. DALE                                                     *
+00012  0810             ;* TUTORIAL #08                                                                *
+00013  0810             ;* DATE : 07TH JAN, 2017                                                       *
+00014  0810             ;*                                                                             *
+00015  0810             ;*******************************************************************************
+00016  0810             ;*                                                                             *
+00017  0810             ;*******************************************************************************
+00018  0810             
+00019  0810             *=$0900
+00020  0900  4C C9 09              JMP START
+00021  0903             
+00022  0903             SCRN_START=$0400 
+00023  0903             PRINT=$FFD2 
+00024  0903             BASIN=$FFCF 
+00025  0903             FROMNUM=$B79E 
+00026  0903             GETLINE=$A560 
+00027  0903             
+00028  0903             ADDLO=247
+00029  0903             ADDHI=248
+00030  0903             HTLO=$14
+00031  0903             HTHI=$15
+00032  0903             
+00033  0903             ;*******************************************************************************
+00034  0903             ;*                                                                             *
+00035  0903             ;* ASSEMBLY INCLUDES                                                           *
+00036  0903             ;*                                                                             *
+00037  0903             ;*******************************************************************************
+00038  0903             
+00039  0903             ; ---------------------------------------------------------------------
+00040  0903             ; - CHARACTER ASCII SET CONSTANTS
+00041  0903             ; - DATE 26TH NOVEMBER 2016
+00042  0903             ; - CREATED BY JOHN C. DALE
+00043  0903             ; ---------------------------------------------------------------------
+00044  0903             
+00045  0903             CHR_WHITE  = 5
+00046  0903             CHR_DISABLECOMMODOREKEY = 8
+00047  0903             CHR_ENABLECOMMODOREKEY = 9
+00048  0903             CHR_RETURN = 13
+00049  0903             CHR_SWITCHTOLOWERCASE = 14
+00050  0903             CHR_CURSORUP = 17
+00051  0903             CHR_REVERSEON = 18
+00052  0903             CHR_HOME   = 19
+00053  0903             CHR_OVERWRITE = 20
+00054  0903             CHR_RED    = 28
+00055  0903             CHR_CURSORRIGHT = 29
+00056  0903             CHR_GREEN  = 30
+00057  0903             CHR_BLUE   = 31
+00058  0903             CHR_SPACE  = 32
+00059  0903             CHR_SHIFTRETURN = 141
+00060  0903             CHR_SWITCHTOUPPERCASE = 142
+00061  0903             CHR_BLACK  = 144
+00062  0903             CHR_CURSORDOWN = 145
+00063  0903             CHR_REVERSEOFF = 146
+00064  0903             CHR_CLEARSCREEN = 147
+00065  0903             CHR_INSERT = 148
+00066  0903             CHR_PURPLE = 156
+00067  0903             CHR_CURSORLEFT = 157
+00068  0903             CHR_YELLOW = 158
+00069  0903             CHR_CYAN   = 159
+00070  0903             CHR_SHIFTSPACE = 160
+00071  0903             
+00072  0903             DEFM       PRINTTEXT
+00073  0903                        LDY #>/1             ; LOAD HI BYTE TO Y
+00074  0903                        LDA #</1             ; LOAD LO BYTE TO ACC.
+00075  0903                        JSR STRING           ; PRINT THE TEXT UNTIL HIT ZERO
+00076  0903                        ENDM
+00077  0903             
+00078  0903             ;*******************************************************************************
+00079  0903             ;*                                                                             *
+00080  0903             ;* START                                                                       *
+00081  0903             ;*                                                                             *
+00082  0903             ;*******************************************************************************
+00083  0903             ;* THIS ASKS THE USER TO GUESS THE NUMBER CREATED BETWEEN 0 AND 255            *
+00084  0903             ;*******************************************************************************
+00085  0903             ;*  INPUTS : NONE                                                              *
+00086  0903             ;*  OUTPUTS : NONE                                                             *
+00087  0903             ;*******************************************************************************
+00088  0903             ;* VARIABLES                                                                   *
+00089  0903             GUESS
+00090  0903  00                    BRK
+00091  0904             NUMBERTOGUESS 
+00092  0904  00                    BRK
+00093  0905             GUESSNUMBER 
+00094  0905  00                    BRK
+00095  0906             ;*******************************************************************************
+00096  0906             ;* STRINGS                                                                     *
+00097  0906             GUESSNUMBERTXT 
+00098  0906  59 4F 55              TEXT "YOU HAVE NOW HAD "
+00099  0917  00                    BRK
+00100  0918             
+00101  0918             GUESSNUMBEREND 
+00102  0918  41 54 54              TEXT "ATTEMPT(S)"
+00103  0922  00                    BRK
+00104  0923             
+00105  0923             PLEASEMAKEAGUESSTXT 
+00106  0923  50 4C 45              TEXT "PLEASE MAKE A GUESS (0-255)?"
+00107  093F  00                    BRK
+00108  0940             
+00109  0940             CONGRATULATIONS_TEXT 
+00110  0940  43 4F 4E              TEXT "CONGRATULATIONS, YOU GUESSED CORRECTLY, AND ONLY TOOK "
+00111  0976  00                    BRK
+00112  0977             
+00113  0977             CONGRATULATIONSEND_TEXT 
+00114  0977  20 47 55              TEXT " GUESSES"
+00115  097F  0D                    BYTE CHR_RETURN
+00116  0980  00                    BRK
+00117  0981             
+00118  0981             CARRYSET_TEXT 
+00119  0981  59 4F 55              TEXT "YOUR NUMBER IS TOO HIGH"
+00120  0998  0D                    BYTE 13
+00121  0999  00                    BRK
+00122  099A             
+00123  099A             CARRYCLEAR_TEXT 
+00124  099A  59 4F 55              TEXT "YOUR NUMBER IS TOO LOW"
+00125  09B0  0D                    BYTE 13
+00126  09B1  00                    BRK
+00127  09B2             
+00128  09B2             GUESSATTEMPTS_TEXT 
+00129  09B2  54 48 41              TEXT "THAT WAS GUESS NUMBER "
+00130  09C8  00                    BRK
+00131  09C9             ;*******************************************************************************
+00132  09C9             ;* CODE                                                                        *
+00133  09C9             START
+00134  09C9  A9 00                 LDA #0
+00135  09CB  8D 05 09              STA GUESSNUMBER         ; INIT GUESS ATTEMPTS
+00136  09CE  20 30 0A              JSR RAND                ; GENERATE A NUMBER BETWEEN 0 AND 255
+00137  09D1  8D 04 09              STA NUMBERTOGUESS       ; STORE THAT NUMBER
+00138  09D4                        ;JSR PRINTACCUMLATOR     ; PRINTS THE VALUE (TEST PURPOSES ONLY)
+00139  09D4             GUESSLOOP
+00140  09D4  20 57 0A              JSR GETNUMBER           ; GETS THE USERS INPUTTED GUESS
+00141  09D7  8E 03 09              STX GUESS               ; STORES THE GUESS
+00142  09DA  EE 05 09              INC GUESSNUMBER         ; INCREASES THE NUMBER OF GUESSES
+00143  09DD  8A                    TXA                     ; TRANSFERS GUESS TO ACC.
+00144  09DE  CD 04 09              CMP NUMBERTOGUESS       ; COMPARE WITH GENERATED NUMBER
+00145  09E1  D0 03                 BNE NOTEQUALTONUMBER
+00146  09E3  4C 00 0A              JMP CONGRATULATIONS
+00147  09E6             NOTEQUALTONUMBER 
+00148  09E6                        ;BEQ CONGRATULATIONS         ; USER GUESSES CORRECTLY
+00149  09E6  90 3E                 BCC SORRYYOURGUESSTOLOW     ; USER GUESSES LOW
+00150  09E8  B0 32                 BCS SORRYYOURGUESSTOHIGH    ; USER GUESSES HIGH
+00151  09EA             CARRYONGUESSING 
+00152  09EA             
+00153  09EA             
+00154  09EA  A0 09                 LDY #>GUESSATTEMPTS_TEXT
+00155  09EC  A9 B2                 LDA #<GUESSATTEMPTS_TEXT
+00156  09EE  20 B7 0A              JSR STRING
+00157  09F1  AD 05 09              LDA GUESSNUMBER             ; LOAD ATTEMPT NUMBER
+00158  09F4  8D 74 0A              STA NUMBERTOPRINT           ; STORE IN NUMBER TO PRINT
+00159  09F7  20 2B 0B              JSR DECIMALPRINT+3          ; PRINT ATTEMPT NUMBER
+00160  09FA  20 B2 0A              JSR CARRAGERETURN           ; PRINT CARRAGERETURN
+00161  09FD  4C D4 09              JMP GUESSLOOP               ; TRY AGAIN
+00162  0A00             
+00163  0A00             
+00164  0A00             CONGRATULATIONS 
+00165  0A00             
+00166  0A00             
+00167  0A00  A0 09                 LDY #>CONGRATULATIONS_TEXT
+00168  0A02  A9 40                 LDA #<CONGRATULATIONS_TEXT
+00169  0A04  20 B7 0A              JSR STRING
+00170  0A07  AD 05 09              LDA GUESSNUMBER                     ; LOADS ATTEMPTS
+00171  0A0A  8D 74 0A              STA NUMBERTOPRINT                   ; STORES FOR PRINTING
+00172  0A0D  20 2B 0B              JSR DECIMALPRINT+3                  ; PRINT ATTEMPT NUMBER
+00173  0A10             
+00174  0A10             
+00175  0A10  A0 09                 LDY #>CONGRATULATIONSEND_TEXT
+00176  0A12  A9 77                 LDA #<CONGRATULATIONSEND_TEXT
+00177  0A14  20 B7 0A              JSR STRING
+00178  0A17  68                    PLA
+00179  0A18  68                    PLA
+00180  0A19  4C 74 A4              JMP $A474
+00181  0A1C                        
+00182  0A1C             SORRYYOURGUESSTOHIGH 
+00183  0A1C             
+00184  0A1C             
+00185  0A1C  A0 09                 LDY #>CARRYSET_TEXT
+00186  0A1E  A9 81                 LDA #<CARRYSET_TEXT
+00187  0A20  20 B7 0A              JSR STRING
+00188  0A23  4C EA 09              JMP CARRYONGUESSING                 ; JUMP BACK
+00189  0A26             
+00190  0A26             SORRYYOURGUESSTOLOW 
+00191  0A26             
+00192  0A26             
+00193  0A26  A0 09                 LDY #>CARRYCLEAR_TEXT
+00194  0A28  A9 9A                 LDA #<CARRYCLEAR_TEXT
+00195  0A2A  20 B7 0A              JSR STRING
+00196  0A2D  4C EA 09              JMP CARRYONGUESSING                 ; JUMP BACK
+00197  0A30             
+00198  0A30             
+00199  0A30             
+00200  0A30             
+00201  0A30             
+00202  0A30             ;*******************************************************************************
+00203  0A30             ;*                                                                             *
+00204  0A30             ;* RAND                                                                        *
+00205  0A30             ;*                                                                             *
+00206  0A30             ;*******************************************************************************
+00207  0A30             ;* THIS RANDAMLY GENERATES A NUMBER BETWEEIN 0 AND 255                         *
+00208  0A30             ;*******************************************************************************
+00209  0A30             ;*  INPUTS : NONE                                                              *
+00210  0A30             ;*  OUTPUTS : X REGISTER CONTAINS RANDOM NUMBER                                *
+00211  0A30             ;*******************************************************************************
+00212  0A30             ;* VARIABLES                                                                   *
+00213  0A30             ;*******************************************************************************
+00214  0A30             ;* CODE                                                                        *
+00215  0A30             RAND
+00216  0A30  A9 00                 LDA #0
+00217  0A32  A0 02                 LDY #2
+00218  0A34  20 91 B3              JSR $B391
+00219  0A37  20 97 E0              JSR $E097
+00220  0A3A  A0 00                 LDY #0
+00221  0A3C  A9 8B                 LDA #$8B
+00222  0A3E  20 8C BA              JSR $BA8C
+00223  0A41  A9 00                 LDA #0
+00224  0A43  A0 FF                 LDY #255
+00225  0A45  20 91 B3              JSR $B391
+00226  0A48  A5 66                 LDA $66
+00227  0A4A  45 6E                 EOR $6E
+00228  0A4C  85 6F                 STA $6F
+00229  0A4E  20 30 BA              JSR $BA30
+00230  0A51  20 AA B1              JSR $B1AA
+00231  0A54  A5 65                 LDA $65
+00232  0A56  60                    RTS
+00233  0A57             
+00234  0A57             ;*******************************************************************************
+00235  0A57             ;*                                                                             *
+00236  0A57             ;* GETNUMBER                                                                   *
+00237  0A57             ;*                                                                             *
+00238  0A57             ;*******************************************************************************
+00239  0A57             ;* THIS ASKS THE USER TO IMPUT AN NUMBER BETWEEN 0 AND 255                     *
+00240  0A57             ;*******************************************************************************
+00241  0A57             ;*  INPUTS : NONE                                                              *
+00242  0A57             ;*  OUTPUTS : X REGISTER CONTAINS NUMBER ENTERED                               *
+00243  0A57             ;*******************************************************************************
+00244  0A57             ;* VARIABLES                                                                   *
+00245  0A57             ;*******************************************************************************
+00246  0A57             ;* CODE                                                                        *
+00247  0A57             GETNUMBER
+00248  0A57  20 B2 0A              JSR CARRAGERETURN
+00249  0A5A             
+00250  0A5A             
+00251  0A5A  A0 09                 LDY #>PLEASEMAKEAGUESSTXT
+00252  0A5C  A9 23                 LDA #<PLEASEMAKEAGUESSTXT
+00253  0A5E  20 B7 0A              JSR STRING
+00254  0A61  20 60 A5              JSR GETLINE
+00255  0A64  A9 01                 LDA #1
+00256  0A66  A2 FF                 LDX #$FF
+00257  0A68  85 7B                 STA $7B
+00258  0A6A  86 7A                 STX $7A
+00259  0A6C  20 73 00              JSR $0073
+00260  0A6F  20 9E B7              JSR $B79E
+00261  0A72  60                    RTS
+00262  0A73             
+00263  0A73             
+00264  0A73             ;*******************************************************************************
+00265  0A73             ;*                                                                             *
+00266  0A73             ;* PRINTACCUMLATOR                                                             *
+00267  0A73             ;*                                                                             *
+00268  0A73             ;*******************************************************************************
+00269  0A73             ;* THIS PRINTS THE NUMBER FROM THE ACCUMULATOR TO BINARY / HEX / DECIMAL       *
+00270  0A73             ;*******************************************************************************
+00271  0A73             ;*  INPUTS : ACCUMULATOR : NUMBER TO PRINT OUT                                 *
+00272  0A73             ;*******************************************************************************
+00273  0A73             ;* VARIABLES                                                                   *
+00274  0A73             STATUSSTATE 
+00275  0A73  00                    BRK
+00276  0A74             NUMBERTOPRINT 
+00277  0A74  00                    BRK
+00278  0A75             NUMBERTOWORK 
+00279  0A75  00                    BRK
+00280  0A76             ;*******************************************************************************
+00281  0A76             ;* CODE                                                                        *
+00282  0A76             PRINTACCUMLATOR 
+00283  0A76  08                    PHP
+00284  0A77  8D 74 0A              STA NUMBERTOPRINT       ; STORE AWAY THE ACCUMULATOR
+00285  0A7A  68                    PLA                     ; PULL STATUS FROM STACK
+00286  0A7B  8D 73 0A              STA STATUSSTATE         ; STORE STATUS
+00287  0A7E  48                    PHA
+00288  0A7F  48                    PHA                     ; PUSH THE ACC TO STACK
+00289  0A80  8A                    TXA                     ; MOVE X TO ACC.
+00290  0A81  48                    PHA                     ; PUSH ACC (X) TO STACK
+00291  0A82  98                    TYA                     ; MOVE Y TO ACC.
+00292  0A83  48                    PHA                     ; PUSH ACC (Y) TO STACK
+00293  0A84  A0 0A                 LDY #>RGTXT             ; LOAD HI BYTE TO Y
+00294  0A86  A9 D1                 LDA #<RGTXT             ; LOAD LO BYTE TO ACC.
+00295  0A88  20 B7 0A              JSR STRING              ; PRINT THE TEXT UNTIL HIT ZERO
+00296  0A8B             
+00297  0A8B  AD 73 0A              LDA STATUSSTATE
+00298  0A8E  20 F2 0A              JSR STATUS_REGISTER
+00299  0A91  20 AD 0A              JSR SPACE
+00300  0A94  20 0D 0B              JSR BINPRINT            ; PRINT BINARY ARRAY FOR NUMBERTOPRINT
+00301  0A97  20 AD 0A              JSR SPACE               ; ADD A SPACE
+00302  0A9A  20 50 0B              JSR HEXADECIMALPRINT    ; PRINT HEXADECIMAL FOR NUMBERTOPRINT
+00303  0A9D  20 AD 0A              JSR SPACE               ; ADD A SPACE
+00304  0AA0  20 28 0B              JSR DECIMALPRINT        ; PRINT DECIMAL FOR NUMBERTOPRINT
+00305  0AA3  20 B2 0A              JSR CARRAGERETURN
+00306  0AA6  68                    PLA                     ; PULL ACC (Y) OFF STACK
+00307  0AA7  A8                    TAY                     ; MOVE ACC. TO Y
+00308  0AA8  68                    PLA                     ; PULL ACC (X) OFF STACK
+00309  0AA9  AA                    TAX                     ; MOVE ACC. TO X
+00310  0AAA  68                    PLA                     ; PULL ACC OFF STACK
+00311  0AAB  28                    PLP
+00312  0AAC  60                    RTS                     ; RETURN BACK
+00313  0AAD             ;*******************************************************************************
+00314  0AAD             
+00315  0AAD             ;*******************************************************************************
+00316  0AAD             ;*                                                                             *
+00317  0AAD             ;* SPACE                                                                       *
+00318  0AAD             ;*                                                                             *
+00319  0AAD             ;*******************************************************************************
+00320  0AAD             ;* THIS ROTUINES PRINTS A SPACE ON THE SCREEN                                  *
+00321  0AAD             ;*******************************************************************************
+00322  0AAD             ;*  INPUTS : NONE                                                              *
+00323  0AAD             ;*******************************************************************************
+00324  0AAD             ;* VARIABLES                                                                   *
+00325  0AAD             ;*******************************************************************************
+00326  0AAD             ;* CODE                                                                        *
+00327  0AAD             SPACE
+00328  0AAD  A9 20                 LDA #CHR_SPACE          ; LOAD SPACE CHARACTER
+00329  0AAF  4C D2 FF              JMP PRINT               ; PRINT THIS CHARACTER
+00330  0AB2             ;*******************************************************************************
+00331  0AB2             
+00332  0AB2             ;*******************************************************************************
+00333  0AB2             ;*                                                                             *
+00334  0AB2             ;* CARRAGERETURN                                                               *
+00335  0AB2             ;*                                                                             *
+00336  0AB2             ;*******************************************************************************
+00337  0AB2             ;* THIS ROTUINES PRINTS A SPACE ON THE SCREEN                                  *
+00338  0AB2             ;*******************************************************************************
+00339  0AB2             ;*  INPUTS : NONE                                                              *
+00340  0AB2             ;*******************************************************************************
+00341  0AB2             ;* VARIABLES                                                                   *
+00342  0AB2             ;*******************************************************************************
+00343  0AB2             ;* CODE                                                                        *
+00344  0AB2             CARRAGERETURN 
+00345  0AB2  A9 0D                 LDA #CHR_RETURN         ; LOAD RETURN CHARACTER
+00346  0AB4  4C D2 FF              JMP PRINT               ; PRINT THIS CHARACTER
+00347  0AB7             ;*******************************************************************************
+00348  0AB7             
+00349  0AB7             ;*******************************************************************************
+00350  0AB7             ;*                                                                             *
+00351  0AB7             ;* STRING                                                                      *
+00352  0AB7             ;*                                                                             *
+00353  0AB7             ;*******************************************************************************
+00354  0AB7             ;* THIS ROUTINE PRINTS A STRING OF CHARACTERS TERMINATING IN A ZERO BYTE       *
+00355  0AB7             ;*******************************************************************************
+00356  0AB7             ;*  INPUTS : ACCUMULATOR : LO BYTE ADDRESS OF STRING                           *
+00357  0AB7             ;*         : Y REGISTER  : HI BYTE ADDRESS OF STRING                           *
+00358  0AB7             ;*******************************************************************************
+00359  0AB7             ;* VARIABLES                                                                   *
+00360  0AB7             ;*******************************************************************************
+00361  0AB7             ;* CODE                                                                        *
+00362  0AB7             STRING
+00363  0AB7  85 14                 STA HTLO                ; STORE LO BYTE ADDRESS OF STRING
+00364  0AB9  84 15                 STY HTHI                ; STORE HI BYTE ADDRESS OF STRING
+00365  0ABB             STRING_NXTCHR 
+00366  0ABB  A0 00                 LDY #0                  ; INITIALISE INDEX Y
+00367  0ABD  B1 14                 LDA (HTLO),Y            ; LOAD CHARACTER AT ADDRESS + Y
+00368  0ABF  C9 00                 CMP #0                  ; IS IT ZERO?
+00369  0AC1  F0 0D                 BEQ STRING_RTS          ; IF ZERO, GOTO END OF ROUTINE
+00370  0AC3  20 D2 FF              JSR PRINT               ; PRINT THIS CHARACTER
+00371  0AC6  18                    CLC                     ; CLEAR THE CARRY
+00372  0AC7  E6 14                 INC HTLO                ; INCREASE LO BYTE
+00373  0AC9  D0 F0                 BNE STRING_NXTCHR       ; BRANCH AWAY IF PAGE NOT CROSSED
+00374  0ACB  E6 15                 INC HTHI                ; INCREASE HI BYTE
+00375  0ACD  4C BB 0A              JMP STRING_NXTCHR       ; JUMP BACK TO GET NEXT CHARACTER
+00376  0AD0             STRING_RTS 
+00377  0AD0  60                    RTS                     ; RETURN BACK
+00378  0AD1             ;*******************************************************************************
+00379  0AD1             
+00380  0AD1             RGTXT
+00381  0AD1  0D                    BYTE CHR_RETURN
+00382  0AD2  4E 56 2D              TEXT "NV-BDIZC BINARY    HEX   DEC."
+00383  0AEF  0D                    BYTE CHR_RETURN
+00384  0AF0  00                    BRK
+00385  0AF1             
+00386  0AF1             ;*******************************************************************************
+00387  0AF1             ;*                                                                             *
+00388  0AF1             ;* STATUS_REGISTER                                                             *
+00389  0AF1             ;*                                                                             *
+00390  0AF1             ;*******************************************************************************
+00391  0AF1             ;* THIS ROUTINE PRINTS THE CONTENTS OF THE STATUS REGISTER                     *
+00392  0AF1             ;*******************************************************************************
+00393  0AF1             ;*  INPUTS : ACCUMULATOR : STATUS REGISTER                                     *
+00394  0AF1             ;*******************************************************************************
+00395  0AF1             ;* VARIABLES                                                                   *
+00396  0AF1             STREG
+00397  0AF1  00                    BRK
+00398  0AF2             ;*******************************************************************************
+00399  0AF2             ;* CODE                                                                        *
+00400  0AF2             STATUS_REGISTER 
+00401  0AF2  A0 00                 LDY #0                  ; INITIALISE Y REGISTER
+00402  0AF4             STREG1
+00403  0AF4  8D F1 0A              STA STREG               ; STORE ACC. INTO STATUS REGISTER VARIABLE
+00404  0AF7             STREG3     
+00405  0AF7  0E F1 0A              ASL STREG               ; LOGICALLY SHIFT THE ACC LEFT, AND CARRY SET OR NOT
+00406  0AFA  A9 00                 LDA #0                  ; LOAD ZERO INTO ACCU.
+00407  0AFC  69 30                 ADC #"0"                ; ADD "0" TO ACC. WITH  CARRY
+00408  0AFE  C0 02                 CPY #2                  ; IS Y = 2
+00409  0B00  D0 02                 BNE STREG2              ; IF YES, BRANCH PAST THE '-' SYMBOL
+00410  0B02  A9 2D                 LDA #"-"                ; LOAD ACC WITH "-"
+00411  0B04             STREG2
+00412  0B04  20 D2 FF              JSR PRINT               ; PRINT THE CONTENTS OF THE ACC
+00413  0B07  C8                    INY                     ; INCREASE THE INDEX Y
+00414  0B08  C0 08                 CPY#8                   ; TEST FOR 8 (8TH BIT OF THE NUMBER)
+00415  0B0A  D0 EB                 BNE STREG3              ; BRANCH IF NOT EQUAL BACK TO NEXT BIT
+00416  0B0C  60                    RTS                     ; RETURN BACK
+00417  0B0D             ;*******************************************************************************
+00418  0B0D             
+00419  0B0D             ;*******************************************************************************
+00420  0B0D             ;*                                                                             *
+00421  0B0D             ;* BINPRINT                                                                    *
+00422  0B0D             ;*                                                                             *
+00423  0B0D             ;*******************************************************************************
+00424  0B0D             ;* THIS ROUTINE PRINTS THE CONTENTS NUMBERTOPRINT AS A BINARY NUMBER           *
+00425  0B0D             ;*******************************************************************************
+00426  0B0D             ;*  INPUTS : NONE                                                              *
+00427  0B0D             ;*******************************************************************************
+00428  0B0D             ;* VARIABLES                                                                   *
+00429  0B0D             ;*******************************************************************************
+00430  0B0D             ;* CODE                                                                        *
+00431  0B0D             BINPRINT
+00432  0B0D  20 48 0B              JSR PRPERCENT           ; PRINT "%"
+00433  0B10  A0 00                 LDY #0                  ; INITIALISE Y INDEX REGISTER WITH ZERO
+00434  0B12  AD 74 0A              LDA NUMBERTOPRINT       ; LOAD ACC WITH NUMBER TO PRINT
+00435  0B15  8D 75 0A              STA NUMBERTOWORK        ; STORE ACC TO NUMBER TO WORK
+00436  0B18             BINPR4
+00437  0B18  0E 75 0A              ASL NUMBERTOWORK        ; LOGICALLY SHIFT LEFT NUMBER TO WORK INTO CARRY
+00438  0B1B  A9 00                 LDA #0                  ; LOAD ACC WITH ZERO
+00439  0B1D  69 30                 ADC #"0                 ; ADD ACC WITH "0" PLUS CARRY
+00440  0B1F  20 D2 FF              JSR PRINT               ; PRINT THIS CHARACTER EITHER '0' OT '1'
+00441  0B22  C8                    INY                     ; INCREASE Y INDEX
+00442  0B23  C0 08                 CPY #8                  ; HAVE WE HIT BIT 8?
+00443  0B25  D0 F1                 BNE BINPR4              ; NO, GET NEXT BIT
+00444  0B27  60                    RTS                     ; RETURN BACK
+00445  0B28             ;*******************************************************************************
+00446  0B28             
+00447  0B28             
+00448  0B28             ;*******************************************************************************
+00449  0B28             ;*                                                                             *
+00450  0B28             ;* DECIMALPRINT                                                                *
+00451  0B28             ;*                                                                             *
+00452  0B28             ;*******************************************************************************
+00453  0B28             ;* THIS ROUTINE PRINTS THE CONTENTS NUMBERTOPRINT AS A DECIMAL NUMBER          *
+00454  0B28             ;*******************************************************************************
+00455  0B28             ;*  INPUTS : NONE                                                              *
+00456  0B28             ;*******************************************************************************
+00457  0B28             ;* VARIABLES                                                                   *
+00458  0B28             ;*******************************************************************************
+00459  0B28             ;* CODE                                                                        *
+00460  0B28             DECIMALPRINT 
+00461  0B28  20 4B 0B              JSR PRHASH              ; PRINT "#"
+00462  0B2B  A9 00                 LDA #$00                ; INITIALISE ACC WITH ZERO
+00463  0B2D  AE 74 0A              LDX NUMBERTOPRINT       ; LOAD X REGISTER WITH NUMBERTOPRINT
+00464  0B30  8E 75 0A              STX NUMBERTOWORK        ; STORE X REGISTER TO NUMBERTOWORK
+00465  0B33  4C CD BD              JMP $BDCD               ; JUMP TO BASIC DECIMAL NUMBER PRINT ROUTINE
+00466  0B36             ;*******************************************************************************
+00467  0B36             
+00468  0B36             PRDOLLAR
+00469  0B36  A9 24                 LDA #"$"
+00470  0B38  2C                    BYTE 44
+00471  0B39             PRBRACKETOPEN 
+00472  0B39  A9 28                 LDA #"("
+00473  0B3B  2C                    BYTE 44
+00474  0B3C             PRBRACKETCLOSED 
+00475  0B3C  A9 29                 LDA #")"
+00476  0B3E  2C                    BYTE 44
+00477  0B3F             PRCOMMA
+00478  0B3F  A9 2C                 LDA #","
+00479  0B41  2C                    BYTE 44
+00480  0B42             PRX
+00481  0B42  A9 58                 LDA #"X"
+00482  0B44  2C                    BYTE 44
+00483  0B45             PRY
+00484  0B45  A9 59                 LDA #"Y"
+00485  0B47  2C                    BYTE 44
+00486  0B48             PRPERCENT  
+00487  0B48  A9 25                 LDA #"%"
+00488  0B4A  2C                    BYTE 44
+00489  0B4B             PRHASH
+00490  0B4B  A9 23                 LDA #"#"
+00491  0B4D  4C D2 FF              JMP PRINT
+00492  0B50             
+00493  0B50             ;*******************************************************************************
+00494  0B50             ;*                                                                             *
+00495  0B50             ;* HEXADECIMALPRINT                                                            *
+00496  0B50             ;*                                                                             *
+00497  0B50             ;*******************************************************************************
+00498  0B50             ;* THIS ROUTINE PRINTS THE CONTENTS NUMBERTOPRINT AS A HEXADECIMAL NUMBER      *
+00499  0B50             ;*******************************************************************************
+00500  0B50             ;*  INPUTS : NONE                                                              *
+00501  0B50             ;*******************************************************************************
+00502  0B50             ;* VARIABLES                                                                   *
+00503  0B50             ;*******************************************************************************
+00504  0B50             ;* CODE                                                                        *
+00505  0B50             HEXADECIMALPRINT 
+00506  0B50  20 36 0B              JSR PRDOLLAR            ; PRINT A "$"
+00507  0B53  A2 00                 LDX #$00                ; INITIALISE X REGISTER WITH ZERO
+00508  0B55  AD 74 0A              LDA NUMBERTOPRINT       ; LOAD ACC WITH NUMBERTOPRINT
+00509  0B58  8D 75 0A              STA NUMBERTOWORK        ; STORE ACC TO NUMBERTOPRINT
+00510  0B5B  4C 5E 0B              JMP PBYTE2              ; JUMP TO HEXADECIMAL ROUTINE
+00511  0B5E             ;*******************************************************************************
+00512  0B5E             
+00513  0B5E             ;*******************************************************************************
+00514  0B5E             ;*                                                                             *
+00515  0B5E             ;* PBYTE2                                                                      *
+00516  0B5E             ;*                                                                             *
+00517  0B5E             ;*******************************************************************************
+00518  0B5E             ;* THIS ROUTINE EVALUATES AND PRINTS A FOUR CHARACTER HEXADECIMAL NUMBER       *
+00519  0B5E             ;*******************************************************************************
+00520  0B5E             ;*  INPUTS : ACCUMULATOR : LO BYTE OF THE NUMBER TO BE CONVERTED               *
+00521  0B5E             ;*           X REGISTER  : HI BYTE OF THE NUMBER TO BE CONVERTED               *
+00522  0B5E             ;*******************************************************************************
+00523  0B5E             ;* VARIABLES                                                                   *
+00524  0B5E             ;*******************************************************************************
+00525  0B5E             ;* CODE                                                                        *
+00526  0B5E             PBYTE2
+00527  0B5E  48                    PHA                     ; PUSH ACC TO THE STACK
+00528  0B5F  8A                    TXA                     ; TANSFER X REGISTER TO ACC
+00529  0B60  20 64 0B              JSR PBYTE1              ; EXECUTE 2 DIGIT HEXADECIMAL CONVERTOR
+00530  0B63  68                    PLA                     ; PULL ACC FROM STACK
+00531  0B64             PBYTE1
+00532  0B64  48                    PHA                     ; PUSH ACC TO THE STACK
+00533  0B65                        ; CONVERT ACC INTO A NIBBLE TOP '4 BITS'
+00534  0B65  4A                    LSR                     ; LOGICALLY SHIFT RIGHT ACC
+00535  0B66  4A                    LSR                     ; LOGICALLY SHIFT RIGHT ACC
+00536  0B67  4A                    LSR                     ; LOGICALLY SHIFT RIGHT ACC
+00537  0B68  4A                    LSR                     ; LOGICALLY SHIFT RIGHT ACC
+00538  0B69  20 70 0B              JSR PBYTE               ; EXECUTE 1 DIGIT HEXADECIMAL NUMBER
+00539  0B6C  AA                    TAX                     ; TRANSFER ACC BACK INTO X REGISTER
+00540  0B6D  68                    PLA                     ; PULL ACC FROM THE STACK
+00541  0B6E  29 0F                 AND #15                 ; AND WITH %00001111 TO FILTER OUT LOWER NIBBLE
+00542  0B70             PBYTE
+00543  0B70  18                    CLC                     ; CLEAR THE CARRY
+00544  0B71                        ; PERFORM TEST WEATHER NUMBER IS GREATER THAN 10
+00545  0B71  69 F6                 ADC #$F6                ; ADD #$F6 TO ACC WITH CARRY
+00546  0B73  90 02                 BCC PBYTE_SKIP          ; BRANCH IS CARRY  IS STILL CLEAR
+00547  0B75  69 06                 ADC #6                  ; ADD #$06 TO ACC TO ALIGN PETSCII CHARACTER 'A'
+00548  0B77             PBYTE_SKIP 
+00549  0B77  69 3A                 ADC #$3A                ; ADD #$3A TO ALIGN FOR PETSCII CHARACTER '0'
+00550  0B79  4C D2 FF              JMP PRINT               ; JUMP TO THE PRINT ROUTINE FOR THAT CHARACTER
+00551  0B7C             ;*******************************************************************************
+00552  0B7C             
+
+******* 51 Label(s) *******
+binpr4 = $0B18 
+BinPrint = $0B0D 
+CarrageReturn = $0AB2 
+CarryClear_TEXT = $099A 
+CarryOnGuessing = $09EA 
+CarrySet_TEXT = $0981 
+Congratulations = $0A00 
+Congratulations_TEXT = $0940 
+CongratulationsEnd_TEXT = $0977 
+DecimalPrint = $0B28 
+GetNumber = $0A57 
+Guess = $0903 
+GuessAttempts_TEXT = $09B2 
+GuessLOOP = $09D4 
+GuessNumber = $0905 
+GuessNumberEnd = $0918 
+GuessNumberTXT = $0906 
+HexadecimalPrint = $0B50 
+NotEqualToNumber = $09E6 
+NumberToGuess = $0904 
+NumberToPrint = $0A74 
+NumberToWork = $0A75 
+pbyte = $0B70 
+pbyte_skip = $0B77 
+pbyte1 = $0B64 
+pbyte2 = $0B5E 
+PleaseMakeAGuessTXT = $0923 
+prBracketClosed = $0B3C 
+prBracketOpen = $0B39 
+prComma = $0B3F 
+prDollar = $0B36 
+prHash = $0B4B 
+PrintAccumlator = $0A76 
+prPercent = $0B48 
+prx = $0B42 
+pry = $0B45 
+rand = $0A30 
+rgtxt = $0AD1 
+SorryYourGuessToHigh = $0A1C 
+SorryYourGuessToLow = $0A26 
+space = $0AAD 
+Start = $09C9 
+status_register = $0AF2 
+StatusState = $0A73 
+streg = $0AF1 
+streg1 = $0AF4 
+streg2 = $0B04 
+streg3 = $0AF7 
+String = $0AB7 
+string_nxtchr = $0ABB 
+string_rts = $0AD0 
+
+******* 10 Unused label(s) *******
+GuessNumberEnd
+GuessNumberTXT
+prBracketClosed
+prBracketOpen
+prComma
+PrintAccumlator
+prx
+pry
+Start
+streg1
+
+******* 36 Variable(s) *******
+addhi  = $00F8
+addlo  = $00F7
+Basin  = $FFCF
+CHR_Black  = $0090
+CHR_Blue  = $001F
+CHR_ClearScreen  = $0093
+CHR_CursorDown  = $0091
+CHR_CursorLeft  = $009D
+CHR_CursorRight  = $001D
+CHR_CursorUp  = $0011
+CHR_Cyan  = $009F
+CHR_DisableCommodoreKey  = $0008
+CHR_EnableCommodoreKey  = $0009
+CHR_Green  = $001E
+CHR_Home  = $0013
+CHR_Insert  = $0094
+CHR_Overwrite  = $0014
+CHR_Purple  = $009C
+CHR_Red  = $001C
+CHR_Return  = $000D
+CHR_ReverseOff  = $0092
+CHR_ReverseOn  = $0012
+CHR_ShiftReturn  = $008D
+CHR_ShiftSpace  = $00A0
+CHR_Space  = $0020
+CHR_SwitchToLowerCase  = $000E
+CHR_SwitchToUpperCase  = $008E
+CHR_White  = $0005
+CHR_Yellow  = $009E
+FromNum  = $B79E
+GetLine  = $A560
+hthi  = $0015
+htlo  = $0014
+Print  = $FFD2
+SCRN_START  = $0400
+tgt_c64  = $0001
+******* 30 Unused variables(s) *******
+addhi
+addlo
+Basin
+CHR_Black
+CHR_Blue
+CHR_ClearScreen
+CHR_CursorDown
+CHR_CursorLeft
+CHR_CursorRight
+CHR_CursorUp
+CHR_Cyan
+CHR_DisableCommodoreKey
+CHR_EnableCommodoreKey
+CHR_Green
+CHR_Home
+CHR_Insert
+CHR_Overwrite
+CHR_Purple
+CHR_Red
+CHR_ReverseOff
+CHR_ReverseOn
+CHR_ShiftReturn
+CHR_ShiftSpace
+CHR_SwitchToLowerCase
+CHR_SwitchToUpperCase
+CHR_White
+CHR_Yellow
+FromNum
+SCRN_START
+tgt_c64
+

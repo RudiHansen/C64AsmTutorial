@@ -1,0 +1,4 @@
+2024-01-04 : Link til OldSkoolCoder's tutorial kode fra hans videoer
+             https://github.com/OldSkoolCoder/Tutorials
+
+2025-01-26 : Husk at push til git med "git push" når du comitter rettelser.
